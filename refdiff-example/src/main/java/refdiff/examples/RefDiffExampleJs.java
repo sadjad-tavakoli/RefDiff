@@ -3,8 +3,8 @@ package refdiff.examples;
 import java.io.File;
 
 import refdiff.core.RefDiff;
+import refdiff.core.cst.CstNode;
 import refdiff.core.diff.CstDiff;
-import refdiff.core.diff.Relationship;
 import refdiff.parsers.js.JsPlugin;
 
 public class RefDiffExampleJs {
@@ -23,19 +23,17 @@ public class RefDiffExampleJs {
 
 			// Clone the angular.js GitHub repo.
 			File repo = refDiffJs.cloneGitRepository(
-				new File(tempFolder, "axios.git"),
-				"https://github.com/refdiff-study/axios.git");
+				new File(tempFolder, "berkeTests.git"),
+				"https://github.com/sadjad-tavakoli/temp_sample.git");
 
-			CstDiff diffForCommit = refDiffJs.computeDiffForCommit(repo, "d23f9d5d4782e5849362895f8b648ed587999706");
-			printRefactorings("Refactorings found in axios d23f9d5d4782e5849362895f8b648ed587999706", diffForCommit);
+			CstDiff diffForCommit = refDiffJs.computeDiffForCommit(repo, "f82ae29");
+			printRefactorings(diffForCommit);
 		}
 	}
 
-	private static void printRefactorings(String headLine, CstDiff diff) {
-		System.out.println(headLine);
-		for (Relationship rel : diff.getRefactoringRelationships()) {
-			System.out.println(rel.getStandardDescription());
+	private static void printRefactorings(CstDiff diff) {
+		for (CstNode node : diff.getChangedEntities()){
+			System.out.println(node.toString());
 		}
 	}
-
 }

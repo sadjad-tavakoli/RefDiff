@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import refdiff.core.cst.CstNode;
 import refdiff.core.cst.CstRoot;
 
 /**
@@ -18,6 +19,7 @@ public class CstDiff {
 	private final CstRoot before;
 	private final CstRoot after;
 	private final Set<Relationship> relationships = new HashSet<>();
+	private Set<CstNode> changedEntities;
 	
 	public CstDiff(CstRoot before, CstRoot after) {
 		this.before = before;
@@ -55,6 +57,19 @@ public class CstDiff {
 		relationships.add(relationship);
 	}
 	
+	public void setChangedEntities(Set<CstNode> changed){
+		this.changedEntities = changed;
+	}
+	
+	public Set<CstNode> getChangedEntities(){
+		return this.changedEntities;
+	}
+
+	public Set<CstNode> getChangedEntities(String type){
+		return this.changedEntities.stream().filter(c -> c.getType().equals(type))
+		.collect(Collectors.toSet());
+	}
+
 	/**
 	 * @return The set of refactoring relationships between nodes of the CST's (before and after).
 	 */
