@@ -41,14 +41,7 @@ public class JsPlugin implements LanguagePlugin, Closeable {
 	
 	public JsPlugin() throws Exception {
 		this.nodeJs = NodeJS.createNodeJS();
-		URL nodeModulesUrl = this.getClass().getClassLoader().getResource("node_modules");
-		if (nodeModulesUrl.toString().startsWith("jar:")) {
-			String tempFolder = System.getProperty("java.io.tmpdir");
-			nodeModules = new File(tempFolder, "refdiff_node_modules");
-			createFilesIfDoesNotExist("@babel/parser/package.json", "@babel/parser/lib/index.js", "@babel/parser/bin/babel-parser.js");
-		} else {
-			nodeModules = new File(nodeModulesUrl.getFile());
-		}
+		nodeModules = new File("/Users/sadjadtavakoli/University/lab/libraries/RefDiff/refdiff-js/src/main/resources/node_modules");
 		this.babel = this.nodeJs.require(new File(nodeModules, "@babel/parser"));
 		
 		this.nodeJs.getRuntime().add("babelParser", this.babel);
