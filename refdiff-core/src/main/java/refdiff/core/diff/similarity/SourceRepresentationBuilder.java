@@ -20,6 +20,8 @@ public interface SourceRepresentationBuilder<T> {
 	
 	double similarity(T arg1, T arg2);
 	
+	void subtractTokens(T arg1, T arg2);
+	
 	double partialSimilarity(T arg1, T arg2);
 
 	double rawSimilarity(T arg1, T arg2);

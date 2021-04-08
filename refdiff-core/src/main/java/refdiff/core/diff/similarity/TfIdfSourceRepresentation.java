@@ -6,7 +6,7 @@ import java.util.Set;
 
 public class TfIdfSourceRepresentation {
 	
-	private final Multiset<String> tokens;
+	private Multiset<String> tokens;
 	private final Vocabulary vocabulary;
 	
 	public TfIdfSourceRepresentation(Multiset<String> tokens, Vocabulary vocabulary) {
@@ -44,6 +44,14 @@ public class TfIdfSourceRepresentation {
 	public double jaccardSimilarity(TfIdfSourceRepresentation other, boolean partial) {
 		double[] tuple = jaccardSimilarityDecomposed(other, partial);
 		return tuple[0] / tuple[1];
+	}
+	
+	public Multiset<String> getTokens(){
+		return tokens;
+	}
+
+	public void removeTokens(Multiset<String> tokensToBeRemoved){
+		tokens = tokens.minus(tokensToBeRemoved);
 	}
 	
 	public double[] jaccardSimilarityDecomposed(TfIdfSourceRepresentation other, boolean partial) {

@@ -11,9 +11,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 import refdiff.core.diff.similarity.SourceRepresentationBuilder;
 import refdiff.core.diff.similarity.TfIdfSourceRepresentationBuilder;
 import refdiff.core.io.SourceFile;
@@ -21,6 +21,7 @@ import refdiff.core.io.SourceFileSet;
 import refdiff.core.cst.HasChildrenNodes;
 import refdiff.core.cst.CstNode;
 import refdiff.core.cst.CstNodeRelationshipType;
+import refdiff.core.cst.CstNodeTypeComprator;
 import refdiff.core.cst.CstRoot;
 import refdiff.core.cst.Stereotype;
 import refdiff.core.util.PairBeforeAfter;
@@ -100,6 +101,7 @@ public class CstComparator {
 			});
 			monitor.beforeCompare(before, after);
 		}
+		
 		
 		public CstDiff getDiff() {
 			return diff;
@@ -309,16 +311,31 @@ public class CstComparator {
 			}
 		}
 		private void findChangedEntities(){
-			for (Entry<CstNode, CstNode> entry : mapBeforeToAfter.entrySet()) {
+			Map<CstNode, CstNode> treeMap = new TreeMap<>(new CstNodeTypeComprator());
+			treeMap.putAll(mapBeforeToAfter);
+
+			for (Entry<CstNode, CstNode> entry : treeMap.entrySet()) {
 				CstNode n1 = entry.getKey();
 				CstNode n2 = entry.getValue();
 				double score = computeHardSimilarityScore(n1, n2);
 				if(score < 1){
+					after.removeFromParents(n2);
+					before.removeFromParents(n1);
 					this.changed.add(n1);
 				}
 			}
 		}
+	// private void removeFromParentTokenBefore(CstNode n1){
+	// 	if(n1.getParent().isPresent()){
+	// 		srb.subtractTokens(before.sourceRep(n1.getParent().get()), before.sourceRep(n1));
+	// 	}
+	// }
 
+	// private void removeFromParentTokenAfter(CstNode n2){
+	// 	if(n2.getParent().isPresent()){
+	// 		srb.subtractTokens(after.sourceRep(n2.getParent().get()), after.sourceRep(n2));
+	// 	}
+	// }
 		public Optional<CstNode> matchingNodeBefore(CstNode n2) {
 			return Optional.ofNullable(mapAfterToBefore.get(n2));
 		}

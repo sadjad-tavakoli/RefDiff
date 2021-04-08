@@ -263,6 +263,39 @@ public class CstRootHelper<T> {
 		return srMap.get(n);
 	}
 	
+	public void removeFromParents(CstNode n) {
+		if (!srMap.containsKey(n)) {
+			throw new RuntimeException("Source representation not computed");
+		}
+		Optional<CstNode> parent = n.getParent(); 
+		while(parent.isPresent()){
+			srb.subtractTokens(sourceRep(parent.get()), sourceRep(n));
+			parent = parent.get().getParent();
+		}
+	}
+
+	// 	if (!srMap.containsKey(n1) || !srMap.containsKey(n2)) {
+	// 		throw new RuntimeException("Source representation not computed");
+	// 	}
+	// 	srb.subtractTokens(sourceRep(n1), sourceRep(n2));
+	// }
+
+	
+
+	// private void removeFromParentTokenBefore(CstNode n1){
+	// 	if(n1.getParent().isPresent()){
+	// 		srb.subtractTokens(before.sourceRep(n1.getParent().get()), before.sourceRep(n1));
+	// 	}
+	// }
+
+	// private void removeFromParentTokenAfter(CstNode n2){
+	// 	if(n2.getParent().isPresent()){
+	// 		srb.subtractTokens(after.sourceRep(n2.getParent().get()), after.sourceRep(n2));
+	// 	}
+	// }
+
+
+	
 	public T bodySourceRep(CstNode n) {
 		if (!srBodyMap.containsKey(n)) {
 			throw new RuntimeException("Source representation not computed");

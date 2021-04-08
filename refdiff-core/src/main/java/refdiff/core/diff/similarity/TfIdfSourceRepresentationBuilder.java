@@ -87,6 +87,11 @@ public class TfIdfSourceRepresentationBuilder implements SourceRepresentationBui
 	}
 	
 	@Override
+	public void subtractTokens(TfIdfSourceRepresentation arg1, TfIdfSourceRepresentation arg2) {
+		arg1.removeTokens(arg2.getTokens());
+	}
+	
+	@Override
 	public double rawSimilarity(TfIdfSourceRepresentation arg1, TfIdfSourceRepresentation arg2) {
 		initialized = true;
 		return arg1.jaccardSimilarityDecomposed(arg2, false)[0];
