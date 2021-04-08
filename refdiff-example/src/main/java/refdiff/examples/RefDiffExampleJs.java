@@ -26,13 +26,18 @@ public class RefDiffExampleJs {
 				new File(tempFolder, "berkeTests.git"),
 				"https://github.com/sadjad-tavakoli/temp_sample.git");
 
-			CstDiff diffForCommit = refDiffJs.computeDiffForCommit(repo, "f82ae29");
+			CstDiff diffForCommit = refDiffJs.computeDiffForCommit(repo, "dd60bb2");
 			printRefactorings(diffForCommit);
 		}
 	}
 
 	private static void printRefactorings(CstDiff diff) {
+		System.out.println(" changed:");
 		for (CstNode node : diff.getChangedEntities()){
+			System.out.println(node.toString());
+		}
+		System.out.println(" added:");
+		for (CstNode node : diff.getAddedEntities()){
 			System.out.println(node.toString());
 		}
 	}

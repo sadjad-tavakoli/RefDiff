@@ -19,8 +19,8 @@ public class CstDiff {
 	private final CstRoot before;
 	private final CstRoot after;
 	private final Set<Relationship> relationships = new HashSet<>();
-	private Set<CstNode> changedEntities;
-	
+	private Set<CstNode> changedEntities;	
+	private Set<CstNode> addedEntities;	
 	public CstDiff(CstRoot before, CstRoot after) {
 		this.before = before;
 		this.after = after;
@@ -61,12 +61,25 @@ public class CstDiff {
 		this.changedEntities = changed;
 	}
 	
+	public void setAddedEntities(Set<CstNode> added){
+		this.addedEntities = added;
+	}
+	
 	public Set<CstNode> getChangedEntities(){
 		return this.changedEntities;
 	}
 
 	public Set<CstNode> getChangedEntities(String type){
 		return this.changedEntities.stream().filter(c -> c.getType().equals(type))
+		.collect(Collectors.toSet());
+	}
+
+	public Set<CstNode> getAddedEntities(){
+		return this.addedEntities;
+	}
+
+	public Set<CstNode> getAddedEntities(String type){
+		return this.addedEntities.stream().filter(c -> c.getType().equals(type))
 		.collect(Collectors.toSet());
 	}
 

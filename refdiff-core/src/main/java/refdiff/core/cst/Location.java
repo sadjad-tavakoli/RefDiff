@@ -7,6 +7,7 @@ public class Location {
 	private int begin;
 	private int end;
 	private int line;
+	private int endLine;
 	private int bodyBegin;
 	private int bodyEnd;
 	
@@ -25,9 +26,21 @@ public class Location {
 		this(file, begin, end, line, begin, end);
 	}
 	
+	public Location(String file, int begin, int end, int line, int endLine, int bodyBegin, int bodyEnd) {
+		this.file = file;
+		this.begin = begin;
+		this.end = end;
+		this.line = line;
+		this.endLine = endLine;
+		this.bodyBegin = bodyBegin;
+		this.bodyEnd = bodyEnd;
+	}
+	
+	
 	public static Location of(String file, int begin, int end, int bodyBegin, int bodyEnd, CharSequence fileContent) {
 		int line = findLineNumber(begin, fileContent);
-		return new Location(file, begin, end, line, bodyBegin, bodyEnd);
+		int endLine = findLineNumber(end, fileContent);
+		return new Location(file, begin, end, line, endLine, bodyBegin, bodyEnd);
 	}
 
 	public static int findLineNumber(int begin, CharSequence fileContent) {
@@ -39,7 +52,7 @@ public class Location {
 		}
 		return count + 1;
 	}
-	
+
 	public String getFile() {
 		return file;
 	}
@@ -110,6 +123,10 @@ public class Location {
 
 	public int getLine() {
 		return line;
+	}
+
+	public int getEndLine() {
+		return endLine;
 	}
 
 	public void setLine(int line) {

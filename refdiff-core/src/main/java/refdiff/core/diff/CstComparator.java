@@ -114,6 +114,7 @@ public class CstComparator {
 			findMatchesByChildren();
 			findChangedEntities();
 			diff.setChangedEntities(this.changed);			
+			diff.setAddedEntities(this.added);			
 			return diff;
 		}
 
