@@ -17,20 +17,24 @@ public class RefDiffBerkak {
 
 	private static void run(String repoLink, String commit) throws Exception {
 		// This is a temp folder to clone or checkout git repositories.
-		File tempFolder = new File("temp");
+		new File("data");
+		File commitFolder = new File("data/" + commit);
 
 		// Creates a RefDiff instance configured with the JavaScript plugin.
 		try (JsPlugin jsPlugin = new JsPlugin()) {
 			RefDiff refDiffJs = new RefDiff(jsPlugin);
 
-			File repo = refDiffJs.cloneGitRepository(new File(tempFolder, "berkeTests.git"), repoLink);
+			File repo = refDiffJs.cloneGitRepository(new File(commitFolder, "berkeTests.git"), repoLink);
 
 			CstDiff diffForCommit = refDiffJs.computeDiffForCommit(repo, commit);
-			try (FileWriter file = new FileWriter("outputs/" + commit + "_changes.json")) {
-				file.write(diffForCommit.toJsonString());
+			String result = diffForCommit.toJsonString();
+			System.out.println(result);
+			try (FileWriter file = new FileWriter(commitFolder + "/changes.json")) {
+				file.write(result);
 				file.flush();	 
 			} catch (IOException e) {
 				e.printStackTrace();
-			}		}
+			}
+		}
 	}
 }

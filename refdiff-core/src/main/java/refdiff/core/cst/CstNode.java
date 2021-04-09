@@ -73,6 +73,15 @@ public class CstNode implements HasChildrenNodes {
 		return location;
 	}
 	
+	public int getLine() {
+		return location.getLine();
+	}
+	
+	public int getEndLine() {
+		return location.getEndLine();
+	}
+	
+	
 	public void setLocation(Location location) {
 		this.location = location;
 	}
