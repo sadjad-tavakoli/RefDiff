@@ -38,7 +38,7 @@ gradlew eclipse
 Note that in Linux or Mac you should run `./gradlew eclipse` to run the gradle wrapper.
 
 Import all projects within `RefDiff` folder to Eclipse. Then, see the examples 
-in `RefDiffExample.java` from `refdiff-example`.
+in `RefDiffExample.java` from `refdiff-berkak`.
 
 You can detect refactorings in a certain repository/commit using the following code:
 

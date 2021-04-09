@@ -36,6 +36,18 @@ public class CstNode implements HasChildrenNodes {
 		return String.format("%s %s at %s:%d-%d", getType().replace("Declaration", ""), getLocalName(), getLocation().getFile(), getLocation().getLine(), getLocation().getEndLine());
 	}
 	
+
+	public String toJsonString() {
+		String json = "{\n";
+		json += "\"name\": \"" + getLocalName() + "\",\n";
+		json += "\"type\": \"" + getType() + "\",\n";
+		json += "\"begin\": " + getLocation().getLine() + ",\n";
+		json += "\"end\": " + getLocation().getEndLine() + ",\n";
+		json += "\"file\": \"" + getLocation().getFile() + "\"\n";
+		json += "}";
+		return json;
+		}
+	
 	/**
 	 * @return An unique id of the node in the CST.
 	 */

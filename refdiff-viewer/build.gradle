@@ -11,7 +11,5 @@ dependencies {
     implementation 'io.github.java-diff-utils:java-diff-utils:4.0'
     implementation project(':refdiff-core')
     implementation project(':refdiff-js')
-    implementation project(':refdiff-java')
-    implementation project(':refdiff-c')
     testImplementation 'junit:junit:4.11'
 }

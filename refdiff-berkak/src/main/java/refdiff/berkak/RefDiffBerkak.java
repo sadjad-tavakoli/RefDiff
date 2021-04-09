@@ -1,0 +1,36 @@
+package refdiff.berkak;
+
+import java.io.File;
+import refdiff.core.RefDiff;
+import refdiff.core.diff.CstDiff;
+import refdiff.parsers.js.JsPlugin;
+import java.io.FileWriter;
+import java.io.IOException;
+
+public class RefDiffBerkak {
+
+	public static void main(String[] args) throws Exception {
+		String repo = args[0];
+		String commit = args[1];
+		run(repo, commit);
+	}
+
+	private static void run(String repoLink, String commit) throws Exception {
+		// This is a temp folder to clone or checkout git repositories.
+		File tempFolder = new File("temp");
+
+		// Creates a RefDiff instance configured with the JavaScript plugin.
+		try (JsPlugin jsPlugin = new JsPlugin()) {
+			RefDiff refDiffJs = new RefDiff(jsPlugin);
+
+			File repo = refDiffJs.cloneGitRepository(new File(tempFolder, "berkeTests.git"), repoLink);
+
+			CstDiff diffForCommit = refDiffJs.computeDiffForCommit(repo, commit);
+			try (FileWriter file = new FileWriter("outputs/" + commit + "_changes.json")) {
+				file.write(diffForCommit.toJsonString());
+				file.flush();	 
+			} catch (IOException e) {
+				e.printStackTrace();
+			}		}
+	}
+}
