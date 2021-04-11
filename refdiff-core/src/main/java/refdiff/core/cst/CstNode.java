@@ -41,6 +41,7 @@ public class CstNode implements HasChildrenNodes {
 		String json = "{\n";
 		json += "\"name\": \"" + getLocalName() + "\",\n";
 		json += "\"type\": \"" + getType() + "\",\n";
+		json += "\"position\": \"" + getLocation().getPosition() + "\",\n";
 		json += "\"begin\": " + getLocation().getLine() + ",\n";
 		json += "\"end\": " + getLocation().getEndLine() + ",\n";
 		json += "\"file\": \"" + getLocation().getFile() + "\"\n";

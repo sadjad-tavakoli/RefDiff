@@ -8,6 +8,7 @@ public class Location {
 	private int end;
 	private int line;
 	private int endLine;
+	private String position;
 	private int bodyBegin;
 	private int bodyEnd;
 	
@@ -26,32 +27,46 @@ public class Location {
 		this(file, begin, end, line, begin, end);
 	}
 	
-	public Location(String file, int begin, int end, int line, int endLine, int bodyBegin, int bodyEnd) {
+	public Location(String file, int begin, int end, Position position, int endLine, int bodyBegin, int bodyEnd) {
 		this.file = file;
 		this.begin = begin;
 		this.end = end;
-		this.line = line;
+		this.line = position.getLine();
 		this.endLine = endLine;
+		this.position = position.toString();
 		this.bodyBegin = bodyBegin;
 		this.bodyEnd = bodyEnd;
 	}
-	
-	
+		
 	public static Location of(String file, int begin, int end, int bodyBegin, int bodyEnd, CharSequence fileContent) {
-		int line = findLineNumber(begin, fileContent);
+		Position position = findLineNumberAndPosition(begin, fileContent);
 		int endLine = findLineNumber(end, fileContent);
-		return new Location(file, begin, end, line, endLine, bodyBegin, bodyEnd);
+		return new Location(file, begin, end, position, endLine, bodyBegin, bodyEnd);
 	}
 
 	public static int findLineNumber(int begin, CharSequence fileContent) {
 		int count = 0;
 		for (int i = 0; i < begin; i++) {
 			if (fileContent.charAt(i) == '\n') {
-				count++;
+				count++; // YOU CAN COMPUTE CHARACTER POSITION AT EACH LINE BY CHANGIN THIS METHOD OR CREATING A NEW ONE
 			}
 		}
 		return count + 1;
 	}
+
+	public static Position findLineNumberAndPosition(int begin, CharSequence fileContent) {
+		int count = 0;
+		int position = 0;
+		for (int i = 0; i < begin; i++) {
+			position++;
+			if (fileContent.charAt(i) == '\n') {
+				count++;
+				position = 0;
+			}
+		}
+		return new Position(count + 1, position);
+	}
+
 
 	public String getFile() {
 		return file;
@@ -127,6 +142,10 @@ public class Location {
 
 	public int getEndLine() {
 		return endLine;
+	}
+
+	public String getPosition() {
+		return position;
 	}
 
 	public void setLine(int line) {

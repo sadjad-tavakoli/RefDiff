@@ -96,7 +96,6 @@ public class CstDiff {
 	public String toJsonString(){
 
 		String json = "{";
-
 		if (!changedEntities.isEmpty()) {
 			json = json.concat("\"changes\" : [");
 
@@ -104,17 +103,19 @@ public class CstDiff {
 				json = json.concat(node.toJsonString().concat(","));
 			}
 			json = json.substring(0, json.length() - 1);
-			json = json.concat("],");
+			json = json.concat("]");
+			if(!addedEntities.isEmpty()){
+				json = json.concat(",");
+			}
 		}
 
 		if (!addedEntities.isEmpty()) {
-			json = json.concat("\"added\" : ");
+			json = json.concat("\"added\" : [");
 			for (CstNode node : addedEntities) {
 				json = json.concat(node.toJsonString().concat(","));
 			}
 			json = json.substring(0, json.length() - 1);
-		} else {
-			json = json.substring(0, json.length() - 1);
+			json = json.concat("]");
 		}
 		
 		json = json.concat("}");
