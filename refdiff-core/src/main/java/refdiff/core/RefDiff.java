@@ -74,6 +74,23 @@ public class RefDiff {
 	}
 	
 	/**
+	 * Compute a CST diff between a commit and its parent commit (previous revision).
+	 * This method will throw an exception if the given commit has more than one parent (e.g., merge commits).
+	 * 
+	 * @param gitRepository The folder of the git repository (you should pass the .git folder if the repository is not on bare mode).
+	 * @param commitSha1 SHA1 (or git object reference) that identifies the commit.
+	 * @param commitSha2 SHA2 (or git object reference) that identifies the previous commit.
+	 * @param monitor CstComparatorMonitor object that can be used to inspect CST relationships discarded along the process.
+	 * @return The computed CST diff.
+	 */
+	public CstDiff computeDiffForCommit(File gitRepository, String commitSha1, String commitSha2) {
+		try (Repository repo = GitHelper.openRepository(gitRepository)) {
+			PairBeforeAfter<SourceFileSet> beforeAndAfter = GitHelper.getSourcesBeforeAndAfterCommit(repo, commitSha1, commitSha2, fileFilter);
+			return comparator.compare(beforeAndAfter, new CstComparatorMonitor() {});
+		}
+	}
+	
+	/**
 	 * Compute the CST diff for each commit in the git repository, starting from HEAD.
 	 * 
 	 * @param gitRepository The folder of the git repository (you should pass the .git folder if the repository is not on bare mode).

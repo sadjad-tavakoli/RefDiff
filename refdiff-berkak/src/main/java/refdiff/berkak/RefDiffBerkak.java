@@ -12,10 +12,11 @@ public class RefDiffBerkak {
 	public static void main(String[] args) throws Exception {
 		String repo = args[0];
 		String commit = args[1];
-		run(repo, commit);
+		String previousCommit = args[2];
+		run(repo, commit, previousCommit);
 	}
 
-	private static void run(String repoLink, String commit) throws Exception {
+	private static void run(String repoLink, String commit, String previousCommit) throws Exception {
 		// This is a temp folder to clone or checkout git repositories.
 		new File("data");
 		File commitFolder = new File("data/" + commit);
@@ -26,7 +27,7 @@ public class RefDiffBerkak {
 
 			File repo = refDiffJs.cloneGitRepository(new File(commitFolder, "berkeTests.git"), repoLink);
 
-			CstDiff diffForCommit = refDiffJs.computeDiffForCommit(repo, commit);
+			CstDiff diffForCommit = refDiffJs.computeDiffForCommit(repo, previousCommit, commit);
 			String result = diffForCommit.toJsonString();
 			System.out.println(result);
 			try (FileWriter file = new FileWriter(commitFolder + "/changes.json")) {
