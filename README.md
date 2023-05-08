@@ -3,24 +3,6 @@
 RefDiff originally is a tool to mine refactorings in the commit history of git repositories.
 Currently, three programming languages are supported: Java, JavaScript, and C.
 
-RefDiff finds relationships between code elements of two given revisions of the
-project. Relationships indicate that both elements are the same, or that a refactoring
-operation involving them was applied. The following relationship types are supported:
-
-* Same
-* Convert Type
-* Change Signature of Method/Function
-* Pull Up Method
-* Push Down Method
-* Rename
-* Move
-* Move and Rename
-* Extract Supertype (e.g., Class/Interface)
-* Extract Method/Function
-* Inline Method/Function
-
-*This version of RefDiff can't find refactory and is changed to detect changed entities between two different versions of project. 
-
 ## This Version
 
 This version of RefDiff will report changed entities instead of refactorings. It uses a changed version of RefDiff Core module to detect changed entities based on textual similarity.
