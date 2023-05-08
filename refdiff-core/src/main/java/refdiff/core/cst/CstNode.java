@@ -30,25 +30,27 @@ public class CstNode implements HasChildrenNodes {
 	public CstNode(int id) {
 		this.id = id;
 	}
-	
-	@Override
-	public String toString() {
-		return String.format("%s %s at %s:%d-%d", getType().replace("Declaration", ""), getLocalName(), getLocation().getFile(), getLocation().getLine(), getLocation().getEndLine());
-	}
-	
 
-	public String toJsonString() {
-		String json = "{\n";
-		json += "\"name\": \"" + getLocalName() + "\",\n";
-		json += "\"type\": \"" + getType() + "\",\n";
-		json += "\"position\": \"" + getLocation().getPosition() + "\",\n";
-		json += "\"begin\": " + getLocation().getLine() + ",\n";
-		json += "\"end\": " + getLocation().getEndLine() + ",\n";
-		json += "\"file\": \"" + getLocation().getFile() + "\"\n";
-		json += "}";
-		return json;
-		}
-	
+    @Override
+    public String toString() {
+        if (this.type.equals("File")) {
+            return String.format("%s", getFileName());
+        }
+        return String.format("%s-%s-%d-%d", getLocalName(), getFileName(), getLine(), getEndLine());
+    }
+
+    public String toJsonString() {
+        String json = "{\n";
+        json += "\"name\": \"" + getLocalName() + "\",\n";
+        json += "\"type\": \"" + getType() + "\",\n";
+        json += "\"position\": \"" + getLocation().getPosition() + "\",\n";
+        json += "\"begin\": " + getLine() + ",\n";
+        json += "\"end\": " + getEndLine() + ",\n";
+        json += "\"file\": \"" + getFileName() + "\"\n";
+        json += "}";
+        return json;
+    }
+
 	/**
 	 * @return An unique id of the node in the CST.
 	 */
@@ -81,7 +83,10 @@ public class CstNode implements HasChildrenNodes {
 	public int getEndLine() {
 		return location.getEndLine();
 	}
-	
+
+    public String getFileName() {
+        return getLocation().getFile().toLowerCase();
+    }
 	
 	public void setLocation(Location location) {
 		this.location = location;

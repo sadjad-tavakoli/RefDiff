@@ -2,3 +2,5 @@
 /.gradle/
 
 .project
+refdiff-berkak/data/
+.DS_Store

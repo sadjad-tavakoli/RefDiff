@@ -3,10 +3,6 @@ package refdiff.parsers.js;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,6 +14,8 @@ import java.util.Set;
 
 import com.eclipsesource.v8.NodeJS;
 import com.eclipsesource.v8.V8Object;
+
+import org.eclipse.jgit.errors.LargeObjectException;
 
 import refdiff.core.io.FilePathFilter;
 import refdiff.core.io.SourceFile;
@@ -38,62 +36,65 @@ public class JsPlugin implements LanguagePlugin, Closeable {
 	private int nodeCounter = 0;
 	private File nodeModules;
 	private V8Object babel;
-	
-	public JsPlugin() throws Exception {
+    private List<String> filesToExclude = new ArrayList<>(Arrays.asList(".min.js"));
+    private List<String> allowedFiles = Arrays.asList(".js", ".ts", ".jsx", ".md", ".json", ".yml", ".lock", ".css",
+            ".html",
+            ".sql", ".txt", ".xmi", ".jade", ".tmpl", ".ejs", ".svg", ".c", ".cpp", ".java", ".h", ".m", ".mm", ".mjs",
+            ".M", ".py", ".sh", ".php", ".rb");
+    private List<String> filesToParse = Arrays.asList(".ts", ".js", ".jsx", ".mjs");
+
+    public JsPlugin(List<String> extraExcludedFiles) throws Exception {
 		this.nodeJs = NodeJS.createNodeJS();
-		nodeModules = new File("/Users/sadjadtavakoli/University/lab/libraries/RefDiff/refdiff-js/src/main/resources/node_modules");
-		this.babel = this.nodeJs.require(new File(nodeModules, "@babel/parser"));
-		
+        nodeModules = new File(new File(System.getProperty("user.dir")).getParent(), "refdiff-js/src/main/resources/node_modules/@babel/parser");
+        this.babel = this.nodeJs.require(nodeModules);
+
 		this.nodeJs.getRuntime().add("babelParser", this.babel);
 		
 		String plugins = "['jsx', 'objectRestSpread', 'exportDefaultFrom', 'exportNamespaceFrom', 'classProperties', 'flow', 'dynamicImport', 'decorators', 'optionalCatchBinding']";
 		
-		this.nodeJs.getRuntime().executeVoidScript("function parse(script) {return babelParser.parse(script, {ranges: true, tokens: true, sourceType: 'unambiguous', allowImportExportEverywhere: true, allowReturnOutsideFunction: true, plugins: " + plugins + " });}");
-		this.nodeJs.getRuntime().executeVoidScript("function toJson(object) {return JSON.stringify(object);}");
-	}
-	
-	private void createFilesIfDoesNotExist(String... paths) {
-		ClassLoader cl = this.getClass().getClassLoader();
-		for (String path : paths) {
-			Path destPath = nodeModules.toPath().resolve(path);
-			if (!Files.exists(destPath)) {
-				try (InputStream is = cl.getResourceAsStream("node_modules/" + path)) {
-					Files.createDirectories(destPath.getParent());
-					Files.copy(is, destPath);
-				} catch (IOException e) {
-					throw new RuntimeException(String.format("Could not copy %s to %s", path, nodeModules.toString()), e);
-				}
-			}
-		}
-	}
+        this.nodeJs.getRuntime().executeVoidScript(
+                "function parse(script) {return babelParser.parse(script, {ranges: true, tokens: true, sourceType: 'unambiguous', allowImportExportEverywhere: true, allowReturnOutsideFunction: true, plugins: "
+                        + plugins + " });}");
+        this.nodeJs.getRuntime().executeVoidScript("function toJson(object) {return JSON.stringify(object);}");
+        this.filesToExclude.addAll(extraExcludedFiles);
+    }
 
 	@Override
-	public CstRoot parse(SourceFileSet sources) throws Exception {
-		try {
-			CstRoot root = new CstRoot();
-			this.nodeCounter = 0;
-			for (SourceFile sourceFile : sources.getSourceFiles()) {
-				String content = sources.readContent(sourceFile);
-				getCst(root, sourceFile, content, sources);
-			}
-			return root;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
-	private void getCst(CstRoot root, SourceFile sourceFile, String content, SourceFileSet sources) throws Exception {
+    public CstRoot parse(SourceFileSet sources, Set<String> nonValidChangedFiles) throws Exception {
+        CstRoot root = new CstRoot();
+        this.nodeCounter = 0;
+        for (SourceFile sourceFile : sources.getSourceFiles()) {
+            if (getAllowedFilesFilter().isAllowedToBeTokenized(sourceFile.getPath())) {
+                String content = "";
+                try {
+                    content = sources.readContent(sourceFile);
+                } catch (LargeObjectException e) {
+                    if (nonValidChangedFiles != null)
+                        nonValidChangedFiles.add(sourceFile.getPath());
+                    continue;
+                }
+                try {
+                    getCst(root, sourceFile, content, sources, nonValidChangedFiles);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                if (nonValidChangedFiles != null)
+                    nonValidChangedFiles.add(sourceFile.getPath());
+            }
+
+        }
+        return root;
+    }
+
+	private void getCst(CstRoot root, SourceFile sourceFile, String content, SourceFileSet sources,
+            Set<String> nonValidChangedFiles) throws Exception {
 		try {
 			V8Object babelAst = (V8Object) this.nodeJs.getRuntime().executeJSFunction("parse", content);
-			
-			// System.out.print(String.format("Parsing %s ... ", sources.describeLocation(sourceFile)));
-			// long timestamp = System.currentTimeMillis();
 			try (JsValueV8 astRoot = new JsValueV8(babelAst, this::toJson)) {
 				
 				TokenizedSource tokenizedSource = buildTokenizedSourceFromAst(sourceFile, astRoot);
 				root.addTokenizedFile(tokenizedSource);
-				
-				// System.out.println(String.format("Done in %d ms", System.currentTimeMillis() - timestamp));
 				Map<String, Set<CstNode>> callerMap = new HashMap<>();
 				getCst(0, root, sourceFile, content, astRoot, callerMap);
 				
@@ -108,7 +109,9 @@ public class JsPlugin implements LanguagePlugin, Closeable {
 			}
 			
 		} catch (Exception e) {
-			throw new RuntimeException(String.format("Error parsing %s: %s", sources.describeLocation(sourceFile), e.getMessage()), e);
+            if (nonValidChangedFiles != null) {
+                nonValidChangedFiles.add(sourceFile.getPath());
+            }
 		}
 	}
 	
@@ -225,7 +228,11 @@ public class JsPlugin implements LanguagePlugin, Closeable {
 	
 	@Override
 	public FilePathFilter getAllowedFilesFilter() {
-		return new FilePathFilter(Arrays.asList(".js", ".jsx"), Arrays.asList(".min.js"));
+	    // TODO JsPlugin reads all of these files and tries to tokenize them. To
+        // prevent redundant reading of non js files, we could have another
+        // filter working in parallel just for suppoerted formats for
+        // changes.
+        return new FilePathFilter(this.allowedFiles, this.filesToParse, this.filesToExclude);
 	}
 	
 	@Override

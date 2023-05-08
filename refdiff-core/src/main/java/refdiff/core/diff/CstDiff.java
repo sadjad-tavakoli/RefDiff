@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import refdiff.core.cst.CstNode;
 import refdiff.core.cst.CstRoot;
 
 /**
@@ -19,8 +18,9 @@ public class CstDiff {
 	private final CstRoot before;
 	private final CstRoot after;
 	private final Set<Relationship> relationships = new HashSet<>();
-	private Set<CstNode> changedEntities;	
-	private Set<CstNode> addedEntities;	
+	private Set<String> addedEntitiesKeys;	
+	private Set<String> changedEntitiesKeys;
+	private Set<String> removedEntitiesKeys;
 	public CstDiff(CstRoot before, CstRoot after) {
 		this.before = before;
 		this.after = after;
@@ -57,30 +57,28 @@ public class CstDiff {
 		relationships.add(relationship);
 	}
 	
-	public void setChangedEntities(Set<CstNode> changed){
-		this.changedEntities = changed;
+	public void setChangedEntitiesKeys(Set<String> changed){
+		this.changedEntitiesKeys = changed;
+	}
+
+	public void setAddedEntitiesKeys(Set<String> added){
+		this.addedEntitiesKeys = added;
 	}
 	
-	public void setAddedEntities(Set<CstNode> added){
-		this.addedEntities = added;
+	public void setRemovedEntitiesKeys(Set<String> removed){
+		this.removedEntitiesKeys = removed;
 	}
 	
-	public Set<CstNode> getChangedEntities(){
-		return this.changedEntities;
+	public Set<String> getChangedEntitiesKeys(){
+		return this.changedEntitiesKeys;
 	}
 
-	public Set<CstNode> getChangedEntities(String type){
-		return this.changedEntities.stream().filter(c -> c.getType().equals(type))
-		.collect(Collectors.toSet());
+	public Set<String> getAddedEntitiesKeys() {
+		return this.addedEntitiesKeys;
 	}
 
-	public Set<CstNode> getAddedEntities(){
-		return this.addedEntities;
-	}
-
-	public Set<CstNode> getAddedEntities(String type){
-		return this.addedEntities.stream().filter(c -> c.getType().equals(type))
-		.collect(Collectors.toSet());
+	public Set<String> getRemovedEntitiesKeys() {
+		return this.removedEntitiesKeys;
 	}
 
 	/**
@@ -92,27 +90,26 @@ public class CstDiff {
 			.collect(Collectors.toSet());
 	}
 
-
 	public String toJsonString(){
 
 		String json = "{";
-		if (!changedEntities.isEmpty()) {
+		if (!changedEntitiesKeys.isEmpty()) {
 			json = json.concat("\"changes\" : [");
 
-			for (CstNode node : changedEntities) {
-				json = json.concat(node.toJsonString().concat(","));
+			for (String node : changedEntitiesKeys) {
+				json = json.concat(node.concat(","));
 			}
 			json = json.substring(0, json.length() - 1);
 			json = json.concat("]");
-			if(!addedEntities.isEmpty()){
+			if(!addedEntitiesKeys.isEmpty()){
 				json = json.concat(",");
 			}
 		}
 
-		if (!addedEntities.isEmpty()) {
+		if (!addedEntitiesKeys.isEmpty()) {
 			json = json.concat("\"added\" : [");
-			for (CstNode node : addedEntities) {
-				json = json.concat(node.toJsonString().concat(","));
+			for (String node : addedEntitiesKeys) {
+				json = json.concat(node.concat(","));
 			}
 			json = json.substring(0, json.length() - 1);
 			json = json.concat("]");

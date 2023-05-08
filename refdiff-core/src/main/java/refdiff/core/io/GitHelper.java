@@ -26,8 +26,13 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.RevWalkUtils;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.JschConfigSessionFactory;
+import org.eclipse.jgit.transport.SshSessionFactory;
 import org.eclipse.jgit.transport.TrackingRefUpdate;
+import org.eclipse.jgit.transport.OpenSshConfig.Host;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+
+import com.jcraft.jsch.Session;
 
 import refdiff.core.util.PairBeforeAfter;
 
@@ -61,7 +66,12 @@ public class GitHelper {
 	
 	public static File cloneBareRepository(File folder, String cloneUrl) {
 		if (!folder.exists()) {
-			// System.out.print("Cloning " + cloneUrl + "...");
+			SshSessionFactory.setInstance(new JschConfigSessionFactory() {
+				public void configure(Host hc, Session session) {
+					session.setConfig("StrictHostKeyChecking", "no");
+				}
+			});
+			System.out.print("Cloning " + cloneUrl + "...");
 			try {
 				Git.cloneRepository()
 					.setURI(cloneUrl)
@@ -69,7 +79,7 @@ public class GitHelper {
 					.setBare(true)
 					.setCloneAllBranches(true)
 					.call();
-				// System.out.println(" DONE");
+                System.out.println(" DONE");
 			} catch (Exception e) {
 				throw new RuntimeException(String.format("Unable to clone %s, cause: %s", cloneUrl, e.getMessage()), e);
 			}
@@ -159,16 +169,27 @@ public class GitHelper {
 	public static PairBeforeAfter<SourceFileSet> getSourcesBeforeAndAfterCommit(Repository repository, String commitId, FilePathFilter fileExtensions) {
 		try (RevWalk rw = new RevWalk(repository)) {
 			RevCommit commitAfter = rw.parseCommit(repository.resolve(commitId));
-			if (commitAfter.getParentCount() != 1) {
-				throw new RuntimeException("Commit should have one parent");
-			}
 			RevCommit commitBefore = rw.parseCommit(commitAfter.getParent(0));
 			return getSourcesBeforeAndAfterCommit(repository, commitBefore, commitAfter, fileExtensions);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
-	
+	public static RevCommit getSourceOnCommit(Repository repository, RevCommit commit){
+		try (RevWalk rw = new RevWalk(repository)) {
+			return rw.parseCommit(commit);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	public static RevCommit getSourceOnCommit(Repository repository, String commitId){
+		try (RevWalk rw = new RevWalk(repository)) {
+			return rw.parseCommit(repository.resolve(commitId));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public static PairBeforeAfter<SourceFileSet> getSourcesBeforeAndAfterCommit(Repository repository, String commitIdBefore, String commitIdAfter, FilePathFilter fileExtensions) {
 		try (RevWalk rw = new RevWalk(repository)) {
 			RevCommit commitBefore = rw.parseCommit(repository.resolve(commitIdBefore));

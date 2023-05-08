@@ -14,18 +14,17 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import refdiff.core.diff.similarity.SourceRepresentationBuilder;
-import refdiff.core.io.SourceFile;
-import refdiff.core.io.SourceFileSet;
-import refdiff.core.cst.HasChildrenNodes;
-import refdiff.core.cst.Location;
-import refdiff.core.cst.Parameter;
+import org.eclipse.jgit.errors.LargeObjectException;
 import refdiff.core.cst.CstNode;
 import refdiff.core.cst.CstNodeRelationship;
 import refdiff.core.cst.CstNodeRelationshipType;
 import refdiff.core.cst.CstRoot;
+import refdiff.core.cst.HasChildrenNodes;
+import refdiff.core.cst.Location;
 import refdiff.core.cst.TokenizedSource;
+import refdiff.core.diff.similarity.SourceRepresentationBuilder;
+import refdiff.core.io.SourceFile;
+import refdiff.core.io.SourceFileSet;
 
 public class CstRootHelper<T> {
 	
@@ -75,9 +74,13 @@ public class CstRootHelper<T> {
 				}
 			});
 		}
-		
-		for (SourceFile file : sources.getSourceFiles()) {
-			fileMap.put(file.getPath(), sources.readContent(file));
+		for (SourceFile file : sources.getSourceFiles()) {			
+			try {
+				fileMap.put(file.getPath(), sources.readContent(file));
+			}
+			catch (LargeObjectException e) {
+				fileMap.put(file.getPath(), e.getMessage());
+			}
 		}
 	}
 	
@@ -161,7 +164,7 @@ public class CstRootHelper<T> {
 	}
 	
 	public static boolean sameNamespace(CstNode n1, CstNode n2) {
-		return Objects.equals(n1.getNamespace(), n2.getNamespace());
+		return n1.getNamespace() != null && Objects.equals(n1.getNamespace(), n2.getNamespace());
 	}
 	
 	public static String signature(CstNode n) {
@@ -174,6 +177,10 @@ public class CstRootHelper<T> {
 	
 	public static boolean anonymous(CstNode n) {
 		return n.getSimpleName().isEmpty();
+	}
+	
+	public static boolean arrowAnonymousFunction(CstNode n) {
+		return n.getSimpleName().equals("arrowAnonymousFunction");
 	}
 	
 	public static boolean leaf(CstNode n) {
@@ -201,23 +208,15 @@ public class CstRootHelper<T> {
 		if (!srMap.containsKey(node)) {
 			String sourceCode = fileMap.get(node.getLocation().getFile());
 			List<String> nodeTokens = retrieveTokens(sourceCode, node, false);
-			srMap.put(node, srb.buildForNode(node, isBefore, nodeTokens));
+			T all = srb.buildForNode(node, isBefore, nodeTokens);
+			T normalizedAll = srb.minus(all, getTokensToIgnoreInNodeBody());
+			srMap.put(node, normalizedAll);
 			srNameMap.put(node, srb.buildForName(node, isBefore));
 			
-			if (node.getLocation().getBegin() != node.getLocation().getBodyBegin()) {
-				List<String> nodeBodyTokens = retrieveTokens(sourceCode, node, true);
-				T body = srb.buildForFragment(nodeBodyTokens);
-				List<String> tokensToIgnore = new ArrayList<>();
-				for (Parameter parameter : node.getParameters()) {
-					tokensToIgnore.add(parameter.getName());
-				}
-				tokensToIgnore.addAll(getTokensToIgnoreInNodeBody(node));
-				T normalizedBody = srb.minus(body, tokensToIgnore);
-				srBodyMap.put(node, normalizedBody);
-				
-			} else {
-				srBodyMap.put(node, srMap.get(node));
-			}
+			List<String> nodeBodyTokens = retrieveTokens(sourceCode, node, true);
+			T body = srb.buildForFragment(nodeBodyTokens);
+			T normalizedBody = srb.minus(body, getTokensToIgnoreInNodeBody());
+			srBodyMap.put(node, normalizedBody);
 		}
 	}
 	
@@ -252,8 +251,8 @@ public class CstRootHelper<T> {
 		return tokens;
 	}
 	
-	private Collection<String> getTokensToIgnoreInNodeBody(CstNode node) {
-		return Arrays.asList("return");
+	private List<String> getTokensToIgnoreInNodeBody() {
+		return Arrays.asList(".", ",", ":", ";", "{", "}", "(", ")", "use strict");
 	}
 	
 	public T sourceRep(CstNode n) {
@@ -264,37 +263,11 @@ public class CstRootHelper<T> {
 	}
 	
 	public void removeFromParents(CstNode n) {
-		if (!srMap.containsKey(n)) {
-			throw new RuntimeException("Source representation not computed");
-		}
 		Optional<CstNode> parent = n.getParent(); 
-		while(parent.isPresent()){
-			srb.subtractTokens(sourceRep(parent.get()), sourceRep(n));
-			parent = parent.get().getParent();
+		if(parent.isPresent()){
+			srb.subtractTokens(bodySourceRep(parent.get()), sourceRep(n));
 		}
 	}
-
-	// 	if (!srMap.containsKey(n1) || !srMap.containsKey(n2)) {
-	// 		throw new RuntimeException("Source representation not computed");
-	// 	}
-	// 	srb.subtractTokens(sourceRep(n1), sourceRep(n2));
-	// }
-
-	
-
-	// private void removeFromParentTokenBefore(CstNode n1){
-	// 	if(n1.getParent().isPresent()){
-	// 		srb.subtractTokens(before.sourceRep(n1.getParent().get()), before.sourceRep(n1));
-	// 	}
-	// }
-
-	// private void removeFromParentTokenAfter(CstNode n2){
-	// 	if(n2.getParent().isPresent()){
-	// 		srb.subtractTokens(after.sourceRep(n2.getParent().get()), after.sourceRep(n2));
-	// 	}
-	// }
-
-
 	
 	public T bodySourceRep(CstNode n) {
 		if (!srBodyMap.containsKey(n)) {
